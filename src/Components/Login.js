@@ -1,7 +1,64 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Base from './Base'
 import { Card,Row, CardTitle, CardBody, Container, Form, FormGroup, Label, Input ,Button, Col} from 'reactstrap';
+import { toast } from 'react-toastify';
+import { login } from '../services/user-service';
+import { doLogin } from '../auth';
+
 const Login=()=> {
+
+  const[loginDetails,setLoginDetails]=useState({
+    email:'',
+    password:''
+
+  })
+
+  const handleChange=(event,field)=>{
+    let actualValue=event.target.value
+    setLoginDetails({
+      ...loginDetails,[field]:actualValue
+
+    })
+  }
+
+  const handleSubmitForm=(event)=>{
+    event.preventDefault();
+    console.log(loginDetails)
+    if(loginDetails.email.trim()==''||loginDetails.password.trim()=='' ){
+      toast.error("email and password is required !!")
+      return;
+    }
+    login(loginDetails).then((jwtauthtoken)=>{
+      
+      console.log(jwtauthtoken)
+      doLogin(jwtauthtoken,()=>{
+        console.log("login detail is saved")
+      })
+      toast.success("login is successfull !!")
+      setLoginDetails({
+        email:'',
+       password:''
+       })
+    }).catch((error)=>{
+      console.log(error)
+      console.log(error.response); // Add this to check the response object
+        if (error.response?.status === 404 || error.response?.status === 401) {
+          toast.error(error.response.data.message || 'Invalid credentials');
+      }else{
+        toast.error("somethig went wrong with the server")
+      }
+      
+    })
+  }
+
+  const handleReset = () => {
+    setLoginDetails({
+     email:'',
+    password:''
+    })
+    }
+  
+
   return (
     <Base>
     <Container >
@@ -14,22 +71,22 @@ const Login=()=> {
                <h3 style={{ marginLeft: '20px' }}>Login here !!</h3> 
             </CardTitle>
             <CardBody>
-              <Form>
+              <Form onSubmit={handleSubmitForm}>
                
                 <FormGroup>
                   <Label htmlFor="email">Enter Email</Label>
-                  <Input type="email" placeholder='Enter here'  id='email'/>
+                  <Input type="email" placeholder='Enter here'  id='email' value={loginDetails.email} onChange={(e)=>handleChange(e,'email')}/>
                 </FormGroup>
                 <FormGroup>
                   <Label htmlFor="password">Enter Password</Label>
-                  <Input type="password" placeholder='Enter here'  id='password'/>
+                  <Input type="password" placeholder='Enter here'  id='password' value={loginDetails.password} onChange={(e)=>handleChange(e,'password')}/>
                 </FormGroup>
                 
                 <Container className='text-center'>
                 <Button outline color='light'>
                     Register
                 </Button>
-                <Button color='secondary' type='reset' className='ms-2'>
+                <Button color='secondary' type='reset' className='ms-2' onClick={handleReset}>
                     Reset
                 </Button>
                </Container>
